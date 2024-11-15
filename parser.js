@@ -1,4 +1,7 @@
 function scheduleHtmlParser(html) {
+  if(html === ''){
+    return [];
+  }
 const regex = /(\d+)-(\d+)(?:\s*;\s*(\d+))?\s*周/; 
 let list = [];
 // 解析表格

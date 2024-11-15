@@ -12,5 +12,5 @@ async function scheduleHtmlProvider(iframeContent = "", frameContent = "", dom =
     return element.outerHTML;
   }
   await AIScheduleAlert('请先转至课程表详情页')
-  return 'none';
+  return '';
 }
