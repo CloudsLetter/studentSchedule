@@ -49,7 +49,7 @@ $('tr').each((_, tr) => {
    // 过滤当天重复课程
     let exitCruse = false;
     for(let j = 0; j < list.length; j++){
-        if(list[j].name === name && list[j].day === i && list[j].teacher === teacher){
+        if(list[j].name === name && list[j].day === i && list[j].teacher === teacher && list[j].sections.length === sections.length){
             if(list[j].weeks.length === weeks.length){
               exitCruse = true;
             }
