@@ -37,7 +37,7 @@ $('tr').each((_, tr) => {
       weeks.push(parseInt(match[3], 10));
     }
     }
-// 遍历当天所有课程并归纳
+    // 遍历当天所有课程并归纳
     $('tr').each((trIndex2, tr) => {
      const tds = $(tr).children('td');
      const td = tds[i];
@@ -46,7 +46,9 @@ $('tr').each((_, tr) => {
      const div = $(divs).children('div');
      if($(div).eq(0).text().trim() === name && $(div).eq(4).text().trim() === teacher){
           sections.push(trIndex2 + 1);
-    }
+    } else {
+     break;
+     }
     })
 
    // 过滤当天重复课程
