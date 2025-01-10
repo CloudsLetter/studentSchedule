@@ -1,87 +1,93 @@
 function scheduleHtmlParser(html) {
-  if(html === ''){
+  if (html === '') {
     return [];
   }
 const regex = /(\d+)-(\d+)(?:\s*;\s*(\d+))?\s*周/; 
 let list = [];
 // 解析表格
 const $ = cheerio.load(html);
-$('tr').each((_, tr) => {
-
-  const tds = $(tr).find('td');
-  for (let i = 1; i < tds.length; i++) {
-
-    const td = tds[i];
-
-    const divsA = $(td).children('div');
-    for(let k = 0; k < divsA.length; k++){
-    let sections = [];
-    let weeks = [];
-    const divs = divsA[k];
-    const div = $(divs).children('div');
-
-    const name = $(div).eq(0).text().trim();
-    if(name === ''){
-      continue;
-    }
-
-// 正则解析周数
-    const week = $(div).eq(1).children('span').first().text().trim(); 
-    const teacher = $(div).eq(4).children('span').text().trim()
-    const match = week.match(regex);
-    if (match){
-    for(let i = parseInt(match[1], 10); i <= parseInt(match[2], 10); i++){
-      weeks.push(i);
-    }
-    if(match[3]){
-      weeks.push(parseInt(match[3], 10));
-    }
-    }
-    // 遍历当天所有课程并归纳
-    $('tr').each((trIndex2, tr) => {
-     const tds = $(tr).children('td');
-     const td = tds[i];
-     const divsA = $(td).children('div');
-     const divs = divsA[k];
-     const div = $(divs).children('div');
-     if($(div).eq(0).text().trim() === name && $(div).eq(4).text().trim() === teacher){
-          sections.push(trIndex2 + 1);
-    } else {
-     break;
-     }
-    })
-
-   // 过滤当天重复课程
-    let exitCruse = false;
-    for(let j = 0; j < list.length; j++){
-        if(list[j].name === name && list[j].day === i && list[j].teacher === teacher && list[j].sections.length === sections.length){
-            if(list[j].weeks.length === weeks.length){
-              exitCruse = true;
-            }
-        }
+// O^n5时间复杂度
+// 遍历行 
+    $('tr').first().children('td').each((day, _) => {
+      if (day === 0) {
+        return;
       }
+    // 今日课程暂存
+    const todayLesson = new Map();
+    //遍历列
+    $("tr").each((section, _) => {
+      // 遍历不同周相同节课程
+        $("tr").eq(section).children("td").eq(day).children("div").each((_, elem) => {
+               const div = $(elem).children("div");
+               const name = div.eq(0).text().trim();
+               const position = div.eq(3).children("span").text().trim();
+               const teacher = div.eq(4).children("span").text().trim();
+               const weeks = [];
+               if (!name) {
+                 return;
+               }
 
-    if(exitCruse){
-      continue;
-    }
+               const match = div
+                 .eq(1)
+                 .children("span")
+                 .eq(0)
+                 .text()
+                 .trim()
+                 .match(regex);
+               if (match) {
+                 for (
+                   let i = parseInt(match[1], 10);
+                   i <= parseInt(match[2], 10);
+                   i++
+                 ) {
+                   weeks.push(i);
+                 }
+                 if (match[3]) {
+                   weeks.push(parseInt(match[3], 10));
+                 }
+               }
 
-    // 设置数据
-    const data = {
-    name: name, 
-    position: $(div).eq(3).find('span').text().trim(),
-    teacher: teacher,
-    weeks: weeks,
-    day: i, 
-    sections: sections,
-  }
-
-    // 将该对象添加到数据数组中
-    list.push(data);
-    }
-
-  }
-
+               if(todayLesson.has(name + teacher)){
+                if ((section + 1) - todayLesson.get(name + teacher).sections[todayLesson.get(name + teacher).sections.length - 1] !== 1) {
+                  for (let ln = 0; ln < 12; ln++){
+                      if (todayLesson.has(name + teacher + ln)) {
+                        if ((section + 1) - todayLesson.get(name + teacher + ln).sections[todayLesson.get(name + teacher + ln).sections.length - 1] !== 1) {
+                          continue;
+                        } else {
+                          todayLesson.get(name + teacher + ln).sections.push(section + 1);
+                          break;
+                        }
+                      
+                      } else {
+                        todayLesson.set(name + teacher + ln, {
+                          name,
+                          position,
+                          teacher,
+                          weeks: weeks,
+                          day: day,
+                          sections: [section + 1],
+                        });
+                        break;
+                      } 
+                    }
+                  } else {
+                      todayLesson.get(name + teacher).sections.push(section + 1);
+                  }
+               } else {
+                  todayLesson.set(name + teacher, {
+                    name,
+                    position,
+                    teacher,
+                    weeks: weeks,
+                    day: day,
+                    sections: [section + 1],
+                  });
+               }
+              });
+      });
+      todayLesson.forEach((value) => {
+        list.push(value);
+      });
 });
-
 return list;
 }
