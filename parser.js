@@ -46,10 +46,8 @@ const $ = cheerio.load(html);
                    weeks.push(parseInt(match[3], 10));
                  }
                }
-
-               if(todayLesson.has(name + teacher)){
-                if ((section + 1) - todayLesson.get(name + teacher).sections[todayLesson.get(name + teacher).sections.length - 1] !== 1) {
-                  for (let ln = 0; ln < 12; ln++){
+               
+               for (let ln = 0; ln < 12; ln++){
                       if (todayLesson.has(name + teacher + ln)) {
                         if ((section + 1) - todayLesson.get(name + teacher + ln).sections[todayLesson.get(name + teacher + ln).sections.length - 1] !== 1) {
                           continue;
@@ -70,19 +68,6 @@ const $ = cheerio.load(html);
                         break;
                       } 
                     }
-                  } else {
-                      todayLesson.get(name + teacher).sections.push(section + 1);
-                  }
-               } else {
-                  todayLesson.set(name + teacher, {
-                    name,
-                    position,
-                    teacher,
-                    weeks: weeks,
-                    day: day,
-                    sections: [section + 1],
-                  });
-               }
               });
       });
       todayLesson.forEach((value) => {
