@@ -2,11 +2,11 @@ function scheduleHtmlParser(html) {
   if (html === '') {
     return [];
   }
-const regex = /(\d+)-(\d+)(?:\s*;\s*(\d+))?\s*周/; 
+const regex = /(\d+)-(\d+)(?:\s*;\s*(\d+))?\s*(\S)?\s*周$/; 
 let list = [];
 // 解析表格
 const $ = cheerio.load(html);
-// O^n5时间复杂度
+// On^5时间复杂度
 // 遍历行 
     $('tr').first().children('td').each((day, _) => {
       if (day === 0) {
@@ -21,12 +21,12 @@ const $ = cheerio.load(html);
                const div = $(elem).children("div");
                const name = div.eq(0).text().trim();
                const position = div.eq(3).children("span").text().trim();
+               const weekss = div.eq(1).children("span").eq(0).text().trim();
                const teacher = div.eq(4).children("span").text().trim();
                const weeks = [];
                if (!name) {
                  return;
                }
-
                const match = div
                  .eq(1)
                  .children("span")
@@ -34,7 +34,7 @@ const $ = cheerio.load(html);
                  .text()
                  .trim()
                  .match(regex);
-               if (match) {
+               if (match && match[4] !== "单" && match[4] !== "双") {
                  for (
                    let i = parseInt(match[1], 10);
                    i <= parseInt(match[2], 10);
@@ -42,22 +42,43 @@ const $ = cheerio.load(html);
                  ) {
                    weeks.push(i);
                  }
-                 if (match[3]) {
-                   weeks.push(parseInt(match[3], 10));
-                 }
-               }
-               
+
+               } else if (match && match[4] === "单") {
+                  for (
+                    let i = parseInt(match[1], 10);
+                    i <= parseInt(match[2], 10);
+                    i++
+                  ) {
+                    if (i % 2 === 1) {
+                      weeks.push(i);
+                    }
+                  }
+                } else if (match && match[4] === "双") {
+                  for (
+                    let i = parseInt(match[1], 10);
+                    i <= parseInt(match[2], 10);
+                    i++
+                  ) {
+                    if (i % 2 === 0) {
+                      weeks.push(i);
+                    }
+                  }
+                }
+                if (match[3]) {
+                  weeks.push(parseInt(match[3], 10));
+                }
                for (let ln = 0; ln < 12; ln++){
-                      if (todayLesson.has(name + teacher + ln)) {
-                        if ((section + 1) - todayLesson.get(name + teacher + ln).sections[todayLesson.get(name + teacher + ln).sections.length - 1] !== 1) {
+                      if (todayLesson.has(name + teacher + ln + weekss)) {
+                        if ((section + 1) - todayLesson.get(name + teacher + ln + weekss).sections[todayLesson.get(name + teacher + ln + weekss).sections.length - 1] !== 1) {
                           continue;
                         } else {
-                          todayLesson.get(name + teacher + ln).sections.push(section + 1);
+                          todayLesson
+                            .get(name + teacher + ln + weekss)
+                            .sections.push(section + 1);
                           break;
                         }
-                      
                       } else {
-                        todayLesson.set(name + teacher + ln, {
+                        todayLesson.set(name + teacher + ln + weekss, {
                           name,
                           position,
                           teacher,
